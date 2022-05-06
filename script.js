@@ -5,6 +5,8 @@ const authorText = document.getElementById("author");
 const twitterBtn = document.getElementById("twitter");
 const newQuoteBtn = document.getElementById("new-quote");
 const loader = document.getElementById("loader");
+let errHappened = 0;
+const MAX_ERR_QUANT = 3;
 //Helper functions
 function checkAuthor(author) {
   // Check if Author filed is blank and replace t with "Unknown"
@@ -24,14 +26,13 @@ function checkQuoteLength(quote) {
   }
 }
 
-//Show loading
-function loading() {
+function showLoadingSpiner() {
   loader.hidden = false;
   quoteContainer.hidden = true;
 }
 
 // Hide loading
-function complete() {
+function removeLoadingSpinner() {
   loader.hidden = true;
   quoteContainer.hidden = false;
 }
@@ -39,7 +40,7 @@ function complete() {
 // Show new Quote
 function newQuote() {
   // Show loading
-  loading();
+  showLoadingSpiner();
   // Pick a random quote from localQuotes array
   const quote = localQuotes[Math.floor(Math.random() * localQuotes.length)];
   // Check if Author filed is blan and replace it with "Unknown"
@@ -49,12 +50,12 @@ function newQuote() {
   // Set Quote
   quoteText.innerText = quote.text;
   // Hide loader
-  complete();
+  removeLoadingSpinner();
 }
 
 // Get Quotes from API
 async function getQuote() {
-  loading();
+  showLoadingSpiner();
   const proxyUrl = "https://whispering-tor-04671.herokuapp.com/";
   const apiURL =
     "http://api.forismatic.com/api/1.0/?method=getQuote&lang=en&format=json";
@@ -68,10 +69,21 @@ async function getQuote() {
     // Set Quote
     quoteText.innerText = data.quoteText;
     // Hide Loader
-    complete();
+    removeLoadingSpinner();
   } catch (error) {
     // Catch Error Here
-    getQuote();
+    if (errHappened > MAX_ERR_QUANT) {
+      // Error message to the user.
+      quoteText.innerText =
+        "Sorry, something went wrong. Please try later. This quote is special for you - 'Winners never quit, and quitters never win.'";
+      authorText.innerText = "Vince Lombardi";
+      return;
+    } else {
+      // Count errors.
+      errHappened++;
+      // Try to get quote.
+      getQuote();
+    }
   }
 }
 
